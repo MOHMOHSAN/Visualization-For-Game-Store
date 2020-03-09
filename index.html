@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Finalized Map</title>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+	<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+	<!-- csv plugin -->
+	<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.2.0/leaflet-omnivore.min.js'>
+    </script>
+
+    <!-- Clustering -->
+    <link rel="stylesheet" href="css/MarkerCluster.css" />
+    <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
+
+    <script src="js/leaflet.markercluster.js"></script>
+
+
+
+</head>
+<style type="text/css">
+	body { 
+	    padding-top: 56px; 
+	}
+
+	#map{
+		height: 600px;
+		width: 100%;
+	}
+
+	.topnav{
+		background-color: #1e88e5;
+	}
+
+	span.logoText{
+		color: #fff;
+		top:6px;
+		position: relative;
+		padding: 10px;
+	}
+
+	.checkbox{
+		margin: 40px;
+	}
+
+	h4{
+		text-align: center;
+	}
+
+
+	.info {
+		    padding: 6px 8px;
+		    font: 14px/16px Arial, Helvetica, sans-serif;
+		    background: white;
+		    background: rgba(255,255,255,0.8);
+		    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+		    border-radius: 5px;
+	}
+	.info h4 {
+	    margin: 0 0 5px;
+	    color: #777;
+	}
+
+
+	.legend {
+	    line-height: 18px;
+	    color: #555;
+	}
+	.legend i {
+	    width: 18px;
+	    height: 18px;
+	    float: left;
+	    margin-right: 8px;
+	    opacity: 0.7;
+	}
+</style>
+<body>
+	 <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top topnav" role="navigation">
+        <div class="container topnav">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <img src="images/logo.png" width="50px"><span class="logoText">Visualization for game retails</span>
+            </div>
+         
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <div class="row">
+    	
+	   	<div class="col-lg-3">
+	   		<h4>Contents</h4>
+	   		<hr>
+
+	   		<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="population" value="">
+			    Population Density in each district
+			  </label>
+			</div>
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="mrt" value="">
+			    Mrt Station
+			  </label>
+			</div>
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="stores" value="">
+			    Game stores Locations
+			  </label>
+			</div>
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="contests" value="">
+			    Game Contest Locations
+			  </label>
+			</div>
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="schools" value="">
+			    Secondary Schools
+			  </label>
+			</div>
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="malls" value="">
+			    Shopping malls
+			  </label>
+			</div>
+
+			<div class="checkbox">
+			  <label>
+			    <input type="checkbox" id="clustering" value="">
+			    Clustering
+			  </label>
+			</div>
+
+
+	   	</div>
+
+	   	<div class="col-lg-8">
+	   		<div id="map"></div>
+	   	</div>
+    </div>
+   	<script>
+		$(function() {
+			var map = new L.Map("map", {center: [1.3601664,103.8251833], zoom: 11})
+		    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+
+		    var mrtLayer;
+		    var populationLayer;
+		    var gameStoreLayer;
+		    var contestLayer;
+		    var schoolLayer;
+		    var mallLayer;
+		    var markerClusters = new L.MarkerClusterGroup({
+			    		maxClusterRadius: 50,
+    					showCoverageOnHover: false
+			});
+
+	     	// ---------  for mrt ------------//
+	     	$('#mrt').click(function(){
+			    if($(this).is(':checked')){
+				    mrtLayer=omnivore.csv('data/MRTstationsSg.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {       
+			                if (marker.toGeoJSON().properties.Line === '1') {
+			                    var redIcon = L.icon({
+			                        iconUrl: '~/../images/redLine_v1.png',
+			                        iconSize:[15, 15]
+			                    });
+			                    marker.setIcon(redIcon);
+			                }else if (marker.toGeoJSON().properties.Line === '2'){
+			                    var redIcon = L.icon({
+			                        iconUrl: '~/../images/greenLine_v1.png',
+			                        iconSize:[15, 15]
+			                    });
+			                    marker.setIcon(redIcon);
+			                }else if(marker.toGeoJSON().properties.Line === '3'){
+			                    var purpleIcon = L.icon({
+			                        iconUrl: '~/../images/purpleLine_v1.png',
+			                        iconSize:[15, 15]
+			                    });
+			                    marker.setIcon(purpleIcon);
+			                }else if(marker.toGeoJSON().properties.Line === '4'){
+			                    var orangeIcon = L.icon({
+			                        iconUrl: '~/../images/circleLine_v1.png',
+			                        iconSize:[15, 15]
+			                    });
+			                    marker.setIcon(orangeIcon);
+			                }else{
+			                    var blueIcon = L.icon({
+			                        iconUrl: '~/../images/downTownLine_v1.png',
+			                        iconSize:[15, 15]
+			                    });
+			                    marker.setIcon(blueIcon);
+			                }
+			                // Bind a popup to each icon based on the same properties
+			                marker.bindPopup(marker.toGeoJSON().properties.id);
+			            }).addTo(map);
+			        });	
+			    } else {
+			       	map.removeLayer(mrtLayer);
+			    }
+			});
+			// ---------- end of mrt --------//
+
+
+
+	     	// ---------  for game contest ------------//
+	     	$('#contests').click(function(){
+			    if($(this).is(':checked')){
+				    contestLayer=omnivore.csv('data/gameCompetitionLoc.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {       
+			            	
+			                var contestIcon = L.icon({
+		                        iconUrl: '~/../images/contest.png',
+		                        iconSize:[15, 15]
+		                    });
+			                marker.setIcon(contestIcon);
+
+			                marker.bindPopup(marker.toGeoJSON().properties.Name);
+			            }).addTo(map);
+			        });	
+			    } else {
+			       	map.removeLayer(contestLayer);
+			    }
+			});
+			// ---------- end of game contest --------//
+
+
+
+			// ---------  for secondary school ------------//
+	     	$('#schools').click(function(){
+			    if($(this).is(':checked')){
+				    schoolLayer=omnivore.csv('data/secondarySchoolLoc.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {       
+			            	
+			                var schoolIcon = L.icon({
+		                        iconUrl: '~/../images/school.png',
+		                        iconSize:[15, 15]
+		                    });
+			                marker.setIcon(schoolIcon);
+
+			                marker.bindPopup(marker.toGeoJSON().properties.Name);
+			            }).addTo(map);
+			        });	
+			    } else {
+			       	map.removeLayer(schoolLayer);
+			    }
+			});
+			// ---------- end of secondary school --------//
+
+
+
+			// ---------  for shopping mall ------------//
+	     	$('#malls').click(function(){
+			    if($(this).is(':checked')){
+				    mallLayer=omnivore.csv('data/shoppingMallLoc.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {       
+			               
+			                    var redIcon = L.icon({
+			                        iconUrl: '~/../images/mall.png',
+			                        iconSize:[20, 20]
+			                    });
+			                    marker.setIcon(redIcon);
+			              
+			                marker.bindPopup(marker.toGeoJSON().properties.Name);
+			            }).addTo(map);
+			        });	
+			    } else {
+			       	map.removeLayer(mallLayer);
+			    }
+			});
+			// ---------- end of shopping mall --------//
+
+
+
+			// ---------  for game store ------------//
+	     	$('#stores').click(function(){
+			    if($(this).is(':checked')){
+				    gameStoreLayer=omnivore.csv('data/gameStores.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {       
+			            	
+			                var contestIcon = L.icon({
+		                        iconUrl: '~/../images/gameStore.png',
+		                        iconSize:[15, 15]
+		                    });
+			                marker.setIcon(contestIcon);
+
+			                marker.bindPopup(marker.toGeoJSON().properties.name +"<br/> Address :"+marker.toGeoJSON().properties.address);
+			            }).addTo(map);
+			        });	
+			    } else {
+			       	map.removeLayer(gameStoreLayer);
+			    }
+			});
+			// ---------- end of game store --------//
+
+			// ----------- for population ----------- //
+		    $('#population').click(function(){
+			    if($(this).is(':checked')){
+					function getColor(d) {
+			    		return d > 293110 ? '#384c63' :
+				           d > 234488  ? '#394e63' :
+				           d > 175866  ? '#394d65' :
+				           d > 117244  ? '#56768a' :
+				           d > 78180   ? '#79a7b6' : 
+				           d > 49000   ? '#dae4d1' :
+				           d > 10000   ? '#ebefd4' :
+				           d > 3700    ? '#f9f7d8' :
+				                      '#f9f9d5';
+					}
+
+
+					// styling function for geojson layer 
+					function style(feature) {
+					    return {
+					        fillColor: getColor(feature.properties.population),
+					        weight: 1,
+					        opacity: 1,
+					        color: '#a3a3a0',
+					        fillOpacity: 0.8
+					    };
+					}
+
+					// styling for hovering
+					//get current selected district and set thick border when selected
+					function highlightFeature(e){
+						var layer = e.target;
+
+						layer.setStyle({
+							weight: 2,
+							color: '#666',
+							dashArray: '',
+							fillOpacity: 0.7
+						});
+
+						if(!L.Browser.ie && !L.Browser.opera){
+							layer.bringToFront();
+						}
+
+						info.update(layer.feature.properties);
+					}
+
+					//when mouse out
+					function resetHighlight(e){
+						populationLayer.resetStyle(e.target);
+						//will reset layer style to default
+
+						info.update();
+					}
+
+					//when click, zoom it
+					function zoomToFeature(e){
+						map.fitBounds(e.target.getBounds());
+					}
+
+					function onEachFeature(feature, layer){
+						layer.on({
+							mouseover: highlightFeature,
+							mouseout: resetHighlight,
+							click: zoomToFeature
+						});
+					}
+
+					// load GeoJSON from an external file
+					$.getJSON("data/populated_areas.geojson",function(data){
+					    // add GeoJSON layer to the map once the file is loaded
+					    populationLayer = L.geoJson(data,{ style: style , onEachFeature: onEachFeature}).addTo(map);
+					});
+
+					// information dialog
+					info = L.control();
+
+					info.onAdd = function (map){
+						this._div = L.DomUtil.create('div','info');
+						//create div with info class
+
+						this.update();
+						return this._div;
+					};
+
+					info.update = function(props){
+						this._div.innerHTML = '<h4>Population Density</h4>'+ (props ?
+				        '<b>' + props.description + '</b><br />' + props.population + ' people'
+				        : 'Hover over a district to view detail');
+					};
+
+					info.addTo(map);
+
+					// list info
+					var legend = L.control({position: 'topleft'});
+
+					legend.onAdd = function (map) {
+
+					    var div = L.DomUtil.create('div', 'info legend'),
+					        grades = [0, 3700, 10000, 49000, 78180, 117244 ,175866,234488,293110],
+					        labels = [];
+
+					    // loop through our density intervals and generate a label with a colored square for each interval
+					    for (var i = 0; i < grades.length; i++) {
+					        div.innerHTML +=
+					            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+					            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+					    }
+
+					    return div;
+					};
+
+					legend.addTo(map);
+			    } else {
+			       	map.removeLayer(populationLayer);
+			       	$(".info.leaflet-control").html("");
+			    }
+			});
+			// ---------- end of population --------//
+
+
+			
+
+			// ---------  for clustering ------------//
+	     	$('#clustering').click(function(){
+			    if($(this).is(':checked')){
+
+			    	// ======== Mrt ========= //
+			    	omnivore.csv('data/MRTstationsSg.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {
+			            	var mrtIcon = L.icon({
+		                        iconUrl: '~/../images/mrtIcon.png',
+		                        iconSize:[20, 20]
+		                    });
+			                marker.setIcon(mrtIcon);
+			              	markerClusters.addLayer(marker);
+			            });
+			        });
+				
+			    
+
+			        // ======== secondary ========= //
+					omnivore.csv('data/secondarySchoolLoc.csv').on('ready', function(layer) {
+			            this.eachLayer(function(marker) {
+			            	var schoolIcon = L.icon({
+		                        iconUrl: '~/../images/school.png',
+		                        iconSize:[20, 20]
+		                    });
+			                marker.setIcon(schoolIcon);
+			              	markerClusters.addLayer(marker);
+			            });
+			        });
+
+
+					map.addLayer(markerClusters);
+			    } else {
+			       	map.removeLayer(markerClusters);
+			       	markerClusters.clearLayers();	// http://stackoverflow.com/questions/18706743/cant-remove-layers-with-clusters-in-leaflet-js
+			    }
+			});
+			// ---------- end of clustering --------//
+		
+
+
+			
+		  
+
+	     
+		  
+	    });
+	</script>
+<!-- https://github.com/Leaflet/Leaflet/issues/4 -->
+</body>
+</html>
